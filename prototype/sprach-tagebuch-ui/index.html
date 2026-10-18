@@ -1,0 +1,508 @@
+<title>Sprachtagebuch Prototyp</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<!--
+  PROTOTYP – Wegwerf-Code, nicht für Produktion.
+  Frage: Wie soll der Hauptbildschirm der Android-Sprachtagebuch-App aussehen?
+  Drei strukturell verschiedene Varianten auf einer Seite, umschaltbar über
+  die schwebende Leiste unten, die Pfeiltasten, #A/#B/#C oder ?variant=A.
+  Annahme: Lernsprache Spanisch, Niveau A2, Oberfläche Deutsch.
+  Kein Speichern: Alles liegt im Arbeitsspeicher, Neuladen setzt zurück.
+  Die "Korrektur" ist ein Stub, der nur die fünf Beispielfehler erkennt.
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,600;1,7..72,400&family=Roboto+Flex:opsz,wght@8..144,400;8..144,500;8..144,700&display=swap">
+<style>
+/* Layout: ein Android-Telefonrahmen in der Mitte, darunter eine schwebende Prototyp-Leiste. */
+:root {
+  --bg: #e9ebf2;          /* Fläche hinter dem Telefon */
+  --frame: #20232c;       /* Gehäuse */
+  --surface: #f7f8fc;     /* Bildschirm */
+  --card: #ffffff;
+  --line: #d9dce7;
+  --fg: #1b1e27;
+  --muted: #5d6273;
+  --accent: #2d4ba0;      /* Tinte */
+  --accent-soft: #dfe5f7;
+  --on-accent: #ffffff;
+  --marker: #ffe36e;      /* Textmarker für Fehlerstellen */
+  --on-marker: #2a2400;
+  --ok: #1f7a4d;
+  --ok-soft: #d8f0e3;
+  --warn: #9a5b00;
+  --sw-bg: #111318;       /* Prototyp-Leiste, bewusst anders als das Design */
+  --sw-fg: #f4f4f4;
+  --font-ui: "Roboto Flex", Roboto, system-ui, sans-serif;
+  --font-diary: "Literata", Georgia, "Times New Roman", serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0c0e13; --frame: #2b2f3a; --surface: #14171f; --card: #1d212b; --line: #2f3442;
+    --fg: #e6e8ef; --muted: #9ba1b3; --accent: #9fb3ff; --accent-soft: #273152; --on-accent: #0f1530;
+    --marker: #5e5214; --on-marker: #fff4c2; --ok: #6fd3a0; --ok-soft: #173a2a; --warn: #f0b45a;
+    --sw-bg: #f2f3f6; --sw-fg: #111318; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0c0e13; --frame: #2b2f3a; --surface: #14171f; --card: #1d212b; --line: #2f3442;
+  --fg: #e6e8ef; --muted: #9ba1b3; --accent: #9fb3ff; --accent-soft: #273152; --on-accent: #0f1530;
+  --marker: #5e5214; --on-marker: #fff4c2; --ok: #6fd3a0; --ok-soft: #173a2a; --warn: #f0b45a;
+  --sw-bg: #f2f3f6; --sw-fg: #111318; color-scheme: dark;
+}
+html, body { height: 100%; }
+body {
+  background: var(--bg); color: var(--fg); font-family: var(--font-ui); font-size: 15px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 16px 88px; box-sizing: border-box;
+}
+* { box-sizing: border-box; }
+button { font: inherit; color: inherit; cursor: pointer; }
+button:focus-visible, textarea:focus-visible, input:focus-visible, mark:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.stage { display: flex; justify-content: center; height: 100%; }
+.phone {
+  position: relative; width: min(400px, 100%); height: min(820px, 100%);
+  border: 9px solid var(--frame); border-radius: 34px; background: var(--surface);
+  overflow: hidden; display: flex; flex-direction: column;
+}
+@media (max-width: 480px) { .phone { border-width: 1px; border-radius: 18px; } }
+.statusbar { display: flex; justify-content: space-between; padding: 8px 20px 2px; font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.appbar { display: flex; align-items: center; gap: 12px; padding: 8px 16px 10px; min-height: 56px; }
+.appbar h1 { font-size: 20px; font-weight: 500; margin: 0; flex: 1; min-width: 0; text-wrap: balance; }
+.appbar small { display: block; font-size: 12px; color: var(--muted); font-weight: 400; }
+.content { flex: 1; overflow-y: auto; padding: 4px 16px 24px; display: flex; flex-direction: column; gap: 14px; min-height: 0; }
+.chip { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 8px; font-size: 12px; font-weight: 500; background: var(--accent-soft); color: var(--accent); border: 0; letter-spacing: .02em; }
+.chip.outline { background: transparent; border: 1px solid var(--line); color: var(--muted); }
+.chip.ok { background: var(--ok-soft); color: var(--ok); }
+.btn { border: 0; border-radius: 20px; padding: 10px 20px; font-weight: 500; background: var(--accent); color: var(--on-accent); }
+.btn.tonal { background: var(--accent-soft); color: var(--accent); }
+.btn.text { background: transparent; color: var(--accent); padding: 8px 12px; }
+.btn.small { padding: 6px 14px; font-size: 13px; }
+.row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.spacer { flex: 1; }
+.muted { color: var(--muted); }
+.label { font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); font-weight: 500; margin: 6px 0 0; }
+.panel { background: var(--card); border-radius: 16px; padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; }
+.diary { font-family: var(--font-diary); font-size: 17px; line-height: 1.65; }
+textarea.diary { width: 100%; min-height: 190px; resize: none; border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; background: var(--card); color: var(--fg); }
+.m { border-radius: 4px; padding: 1px 2px; }
+mark.m.open { background: var(--marker); color: var(--on-marker); cursor: pointer; border-bottom: 2px solid var(--warn); }
+.m.ok { background: var(--ok-soft); color: var(--ok); }
+.m.shown { background: var(--accent-soft); color: var(--accent); }
+.m.shown del, del.d { color: var(--muted); opacity: .8; }
+ins.d { text-decoration: none; background: var(--ok-soft); color: var(--ok); border-radius: 4px; padding: 0 2px; }
+del.d { text-decoration: line-through; }
+.stat { font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+input.fix { width: 100%; border: 1px solid var(--line); border-radius: 10px; padding: 9px 12px; background: var(--surface); color: var(--fg); font-family: var(--font-diary); font-size: 16px; }
+.hint { font-size: 14px; line-height: 1.45; }
+.feedback { font-size: 13px; color: var(--warn); }
+
+/* Bottom sheet */
+.scrim { position: absolute; inset: 0; background: rgb(0 0 0 / .35); z-index: 5; }
+.sheet { position: absolute; left: 0; right: 0; bottom: 0; z-index: 6; background: var(--card); border-radius: 24px 24px 0 0; padding: 10px 20px 22px; display: flex; flex-direction: column; gap: 12px; max-height: 80%; overflow-y: auto; }
+.sheet::before { content: ""; align-self: center; width: 36px; height: 4px; border-radius: 2px; background: var(--line); }
+
+/* Variante A: Navigationsleiste */
+.navbar { display: grid; grid-template-columns: repeat(3, 1fr); border-top: 1px solid var(--line); background: var(--card); padding: 8px 4px 10px; }
+.navbar button { border: 0; background: none; display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 12px; color: var(--muted); }
+.navbar .pill { width: 56px; height: 28px; border-radius: 14px; display: grid; place-items: center; font-size: 15px; position: relative; }
+.navbar .on { color: var(--fg); font-weight: 500; }
+.navbar .on .pill { background: var(--accent-soft); color: var(--accent); }
+.badge { position: absolute; top: -2px; right: 8px; background: var(--warn); color: var(--card); font-size: 10px; border-radius: 8px; padding: 0 5px; font-weight: 700; }
+.prompt { background: var(--accent-soft); border-radius: 16px; padding: 14px 16px; display: flex; flex-direction: column; gap: 8px; }
+.prompt p { margin: 0; font-size: 16px; line-height: 1.4; color: var(--fg); }
+.vocab { display: flex; flex-wrap: wrap; gap: 8px; }
+.vocab button { border: 1px solid var(--line); background: var(--card); border-radius: 10px; padding: 6px 12px; font-size: 14px; }
+.vocab button.added { border-color: transparent; background: var(--ok-soft); color: var(--ok); }
+.list { display: flex; flex-direction: column; }
+.list > * { display: flex; gap: 12px; align-items: baseline; padding: 12px 0; border-bottom: 1px solid var(--line); text-align: left; background: none; border-left: 0; border-right: 0; border-top: 0; width: 100%; }
+.list .date { font-size: 13px; color: var(--muted); width: 56px; flex: none; font-variant-numeric: tabular-nums; }
+.list .t { flex: 1; min-width: 0; font-family: var(--font-diary); }
+
+/* Review */
+.card-face { font-family: var(--font-diary); font-size: 19px; line-height: 1.5; padding: 22px 18px; border: 1px dashed var(--line); border-radius: 16px; text-align: center; background: var(--card); }
+.card-face .ans { display: block; margin-top: 12px; color: var(--ok); font-weight: 600; }
+.ratings { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.ratings button { border: 1px solid var(--line); background: var(--card); border-radius: 12px; padding: 8px 2px; font-size: 13px; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.ratings small { color: var(--muted); font-size: 11px; font-variant-numeric: tabular-nums; }
+
+/* Variante B: Chat */
+.chat { gap: 10px; background: var(--surface); }
+.day { align-self: center; font-size: 12px; color: var(--muted); }
+.bubble { max-width: 86%; padding: 10px 14px; border-radius: 18px; line-height: 1.5; }
+.bubble.them { align-self: flex-start; background: var(--card); border-bottom-left-radius: 6px; }
+.bubble.me { align-self: flex-end; background: var(--accent); color: var(--on-accent); border-bottom-right-radius: 6px; }
+.bubble.me.diary, .bubble.them.diary { font-size: 16px; }
+.who { font-size: 11px; color: var(--muted); margin-bottom: 2px; }
+.avatar { width: 40px; height: 40px; border-radius: 50%; background: var(--accent); color: var(--on-accent); display: grid; place-items: center; font-weight: 700; flex: none; }
+.corr { align-self: stretch; border: 1px solid var(--line); background: var(--card); border-radius: 16px; padding: 12px 14px; display: flex; flex-direction: column; gap: 10px; }
+.corr-item { border-top: 1px solid var(--line); padding-top: 10px; display: flex; flex-direction: column; gap: 8px; }
+.composer { display: flex; gap: 8px; align-items: flex-end; padding: 8px 12px 12px; border-top: 1px solid var(--line); background: var(--card); }
+.composer textarea { flex: 1; min-width: 0; min-height: 0; height: 96px; font-size: 15px; }
+.send { width: 48px; height: 48px; border-radius: 50%; border: 0; background: var(--accent); color: var(--on-accent); font-size: 18px; flex: none; }
+
+/* Variante C: Kalender */
+.banner { display: flex; align-items: center; gap: 12px; background: var(--marker); color: var(--on-marker); border-radius: 14px; padding: 10px 14px; border: 0; text-align: left; width: 100%; }
+.banner b { font-size: 15px; }
+.cal { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; text-align: center; font-variant-numeric: tabular-nums; }
+.cal .h { font-size: 11px; color: var(--muted); padding-bottom: 2px; }
+.cal .d { aspect-ratio: 1; max-width: 100%; display: grid; place-items: center; border-radius: 50%; font-size: 13px; color: var(--muted); border: 0; background: none; padding: 0; }
+.cal .w { background: var(--accent-soft); color: var(--accent); font-weight: 500; }
+.cal .today { outline: 2px solid var(--accent); outline-offset: -2px; color: var(--fg); }
+.cal .today.w { background: var(--accent); color: var(--on-accent); }
+.bars { display: flex; flex-direction: column; gap: 8px; }
+.bar { display: grid; grid-template-columns: 84px 1fr 24px; gap: 10px; align-items: center; font-size: 13px; font-variant-numeric: tabular-nums; }
+.bar span:nth-child(2) { height: 8px; border-radius: 4px; background: var(--line); overflow: hidden; }
+.bar i { display: block; height: 100%; background: var(--accent); border-radius: 4px; }
+.fab { position: absolute; right: 16px; bottom: 18px; z-index: 3; border: 0; border-radius: 16px; padding: 16px 20px; background: var(--accent); color: var(--on-accent); font-weight: 500; box-shadow: 0 4px 14px rgb(0 0 0 / .25); }
+.seg { display: grid; grid-template-columns: repeat(3, 1fr); border: 1px solid var(--line); border-radius: 20px; overflow: hidden; }
+.seg button { border: 0; background: none; padding: 8px 4px; font-size: 13px; }
+.seg button + button { border-left: 1px solid var(--line); }
+.seg .on { background: var(--accent-soft); color: var(--accent); font-weight: 500; }
+.ctable { display: flex; flex-direction: column; gap: 0; }
+.ctable > div { display: grid; grid-template-columns: 1fr auto; gap: 4px 10px; padding: 10px 0; border-bottom: 1px solid var(--line); }
+.ctable .ex { grid-column: 1 / -1; font-size: 13px; color: var(--muted); line-height: 1.4; }
+
+/* Prototyp-Leiste */
+.switcher {
+  position: fixed; left: 50%; transform: translateX(-50%); z-index: 50;
+  bottom: calc(14px + env(safe-area-inset-bottom, 0px));
+  display: flex; align-items: center; gap: 4px; padding: 6px; border-radius: 999px;
+  background: var(--sw-bg); color: var(--sw-fg); box-shadow: 0 6px 24px rgb(0 0 0 / .3);
+  font-size: 13px; max-width: calc(100vw - 24px);
+}
+.switcher button { border: 0; background: transparent; color: var(--sw-fg); border-radius: 999px; padding: 6px 10px; font-size: 13px; }
+.switcher button:hover { background: rgb(127 127 127 / .25); }
+.switcher .lbl { padding: 0 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.statepanel { position: fixed; right: max(12px, env(safe-area-inset-right, 0px)); bottom: calc(70px + env(safe-area-inset-bottom, 0px)); z-index: 49; width: min(360px, calc(100vw - 24px)); max-height: 55vh; overflow: auto; background: var(--sw-bg); color: var(--sw-fg); border-radius: 12px; padding: 12px; font: 11px/1.45 ui-monospace, Menlo, monospace; white-space: pre-wrap; margin: 0; }
+@media (prefers-reduced-motion: no-preference) { .sheet { animation: up .18s ease-out; } @keyframes up { from { transform: translateY(16px); } } }
+</style>
+
+<div class="stage"><div class="phone" id="phone"></div></div>
+<div class="switcher" role="toolbar" aria-label="Prototyp-Varianten">
+  <button id="prev" aria-label="Vorherige Variante">◀</button>
+  <span class="lbl" id="lbl"></span>
+  <button id="next" aria-label="Nächste Variante">▶</button>
+  <button id="stateBtn">Zustand</button>
+  <button id="resetBtn" aria-label="Zurücksetzen">↺</button>
+</div>
+<pre class="statepanel" id="statePanel" hidden></pre>
+
+<script>
+// ---------- Beispieldaten (Stub) ----------
+const SAMPLE = 'Ayer fui a la playa con mis amigos. Hace mucho calor y yo bebé mucha agua. Yo soy cansado ahora, pero feliz. Me gusta mucho los libros de García Márquez, pero la problema es que son muy largos.';
+const ERR = [
+  { id: 'e1', wrong: 'Hace mucho calor', right: 'Hacía mucho calor', accept: ['hacía mucho calor'], type: 'Zeitform',
+    hint: 'Du beschreibst eine Situation in der Vergangenheit. Welche Vergangenheitsform passt zu Beschreibungen?',
+    expl: 'Hintergrund und Beschreibungen in der Vergangenheit stehen im Imperfecto: hacía.' },
+  { id: 'e2', wrong: 'yo bebé', right: 'bebí', accept: ['bebí', 'yo bebí'], type: 'Verbform',
+    hint: 'Achte auf Akzent und Endung der 1. Person im Indefinido.',
+    expl: 'bebí heißt „ich trank“. bebé heißt „Baby“. Das yo kann wegfallen.' },
+  { id: 'e3', wrong: 'Yo soy cansado', right: 'Estoy cansado', accept: ['estoy cansado', 'yo estoy cansado'], type: 'ser/estar',
+    hint: 'Geht es um eine Eigenschaft oder um einen Zustand gerade jetzt?',
+    expl: 'Vorübergehende Zustände drückt estar aus: estoy cansado.' },
+  { id: 'e4', wrong: 'Me gusta mucho los libros', right: 'Me gustan mucho los libros', accept: ['me gustan mucho los libros'], type: 'Kongruenz',
+    hint: 'Richtet sich gustar nach dir oder nach dem, was gefällt?',
+    expl: 'Das Verb richtet sich nach los libros (Plural): me gustan.' },
+  { id: 'e5', wrong: 'la problema', right: 'el problema', accept: ['el problema'], type: 'Genus',
+    hint: 'Nicht jedes Wort auf -a ist feminin.',
+    expl: 'problema ist maskulin, wie viele Wörter auf -ma: el tema, el sistema.' },
+];
+const VOCAB = [ { w: 'la playa', de: 'der Strand' }, { w: 'cansado', de: 'müde' }, { w: 'largo', de: 'lang' }, { w: 'feliz', de: 'glücklich' } ];
+const PROMPTS = [
+  { lvl: 'A2', t: 'Erzähl von deinem Wochenende: Wo warst du, mit wem, und wie war es?' },
+  { lvl: 'A2', t: 'Beschreib jemanden, mit dem du diese Woche Zeit verbracht hast.' },
+  { lvl: 'B1', t: 'Was liest oder schaust du gerade? Was gefällt dir daran, was nicht?' },
+];
+const PAST = [
+  { d: '17. Okt', title: 'Mi compañera de piso', words: 58, errs: 2, text: 'Mi compañera de piso se llama Lea. Es muy simpática y cocina muy bien. Ayer hizo una tortilla para nosotras.' },
+  { d: '16. Okt', title: 'Una reunión larga', words: 47, errs: 3, text: 'Hoy tuve una reunión de tres horas. Al final todos estábamos muy cansados.' },
+  { d: '15. Okt', title: 'En el mercado', words: 61, errs: 4, text: 'Ayer fui al mercado con mi madre. Compramos fruta y queso.' },
+  { d: '14. Okt', title: 'Lluvia', words: 39, errs: 1, text: 'Hoy llueve todo el día. Me quedo en casa y leo.' },
+];
+const CARDS0 = [
+  { id: 'c1', front: 'Ayer _____ al mercado con mi madre. (ir, Indefinido)', back: 'fui', src: '15. Okt', due: true },
+  { id: 'c2', front: 'Al final todos _____ muy cansados. (ser/estar, Imperfecto)', back: 'estábamos', src: '16. Okt', due: true },
+  { id: 'c3', front: '_____ sistema (Artikel?)', back: 'el sistema', src: '12. Okt', due: true },
+];
+const WRITTEN = [1, 2, 3, 5, 6, 7, 8, 10, 12, 13, 14, 15, 16, 17];
+const PROFILE0 = { 'Genus': 6, 'ser/estar': 4, 'Zeitform': 3, 'Kongruenz': 2, 'Verbform': 2 };
+
+// ---------- Zustand (nur im Speicher) ----------
+const fresh = () => ({
+  draft: SAMPLE, checked: false, editing: false, errors: [], feedback: {},
+  cards: CARDS0.map(c => ({ ...c })), promptIdx: 0, reviewShow: false,
+  sheet: null,            // {kind:'err', id} | {kind:'review'}
+  tabA: 'write',
+  bOpen: false, bExtra: [],
+  cOpen: null, cView: 'diff',
+});
+let S = fresh();
+
+// ---------- Helfer ----------
+const esc = s => s.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const norm = s => s.toLowerCase().replace(/[.,!?¡¿]/g, '').replace(/\s+/g, ' ').trim();
+const words = s => (s.trim().match(/\S+/g) || []).length;
+const due = () => S.cards.filter(c => c.due);
+const err = id => S.errors.find(e => e.id === id);
+const resolved = e => e.status !== 'open';
+
+function marked(mode) {
+  let html = esc(S.draft);
+  for (const e of S.errors) {
+    let rep;
+    if (mode === 'diff') rep = `<del class="d">${esc(e.wrong)}</del> <ins class="d">${esc(e.right)}</ins>`;
+    else if (mode === 'fixed') rep = esc(e.right);
+    else if (e.status === 'open') rep = `<mark class="m open" tabindex="0" data-act="openErr" data-id="${e.id}">${esc(e.wrong)}</mark>`;
+    else if (e.status === 'selbst') rep = `<span class="m ok">${esc(e.right)}</span>`;
+    else rep = `<span class="m shown"><del>${esc(e.wrong)}</del> ${esc(e.right)}</span>`;
+    html = html.replace(esc(e.wrong), rep);
+  }
+  return html;
+}
+function sentenceOf(e) {
+  return S.draft.split(/(?<=[.!?])\s+/).find(s => s.includes(e.wrong)) || e.wrong;
+}
+function addErrCard(e) {
+  if (S.cards.some(c => c.id === 'k' + e.id)) return;
+  S.cards.push({ id: 'k' + e.id, front: sentenceOf(e).replace(e.wrong, '_____') + ` (${e.type})`, back: e.right, src: 'Heute', due: true });
+}
+function addVocab(v) {
+  if (S.cards.some(c => c.id === 'v' + v.w)) return;
+  S.cards.push({ id: 'v' + v.w, front: `${v.de} → auf Spanisch?`, back: v.w, src: 'Heute', due: true });
+}
+const hasCard = id => S.cards.some(c => c.id === id);
+const resolvedCount = () => S.errors.filter(resolved).length;
+
+// Gemeinsame Bausteine (bewusst klein; das Layout gehört jeder Variante selbst)
+function errBody(e, compact) {
+  const fb = S.feedback[e.id];
+  if (!resolved(e)) return `
+    ${compact ? '' : `<div class="row"><span class="chip">${e.type}</span><span class="spacer"></span><span class="stat">${S.errors.indexOf(e) + 1} von ${S.errors.length}</span></div>
+    <div class="diary"><mark class="m open">${esc(e.wrong)}</mark></div>`}
+    <div class="hint">${e.hint}</div>
+    <input class="fix" id="fix-${e.id}" placeholder="Wie heißt es richtig?" value="${esc(e.wrong)}" autocomplete="off">
+    ${fb ? `<div class="feedback">${fb}</div>` : ''}
+    <div class="row"><button class="btn small" data-act="tryFix" data-id="${e.id}">Prüfen</button><button class="btn text small" data-act="reveal" data-id="${e.id}">Lösung zeigen</button></div>`;
+  return `
+    ${compact ? '' : `<div class="row"><span class="chip ${e.status === 'selbst' ? 'ok' : ''}">${e.status === 'selbst' ? 'Selbst korrigiert' : 'Lösung angesehen'}</span><span class="chip outline">${e.type}</span></div>`}
+    <div class="diary"><del class="d">${esc(e.wrong)}</del> <ins class="d">${esc(e.right)}</ins></div>
+    <div class="hint muted">${e.expl}</div>
+    <div class="row">${hasCard('k' + e.id) ? '<span class="chip ok">Karte gespeichert</span>' : `<button class="btn tonal small" data-act="toCard" data-id="${e.id}">Als Karte speichern</button>`}
+    ${compact ? '' : nextOpenBtn(e)}</div>`;
+}
+function nextOpenBtn(e) {
+  const n = S.errors.find(x => x !== e && !resolved(x));
+  return n ? `<button class="btn text small" data-act="openErr" data-id="${n.id}">Nächste Stelle</button>` : `<button class="btn text small" data-act="closeSheet">Fertig</button>`;
+}
+function reviewBody() {
+  const c = due()[0];
+  if (!c) return `<div class="panel"><b>Alles wiederholt.</b><span class="muted">Die nächsten Karten sind morgen fällig.</span></div>`;
+  return `
+    <div class="row"><span class="stat">${due().length} fällig</span><span class="spacer"></span><span class="chip outline">aus ${c.src}</span></div>
+    <div class="card-face">${esc(c.front)}${S.reviewShow ? `<span class="ans">${esc(c.back)}</span>` : ''}</div>
+    ${S.reviewShow ? `<div class="ratings">
+      <button data-act="rate">Nochmal<small>&lt;10 Min</small></button>
+      <button data-act="rate">Schwer<small>1 T</small></button>
+      <button data-act="rate">Gut<small>3 T</small></button>
+      <button data-act="rate">Einfach<small>8 T</small></button></div>`
+      : `<button class="btn" data-act="show">Aufdecken</button>`}
+    <span class="stat">Intervalle sind Platzhalter. Später plant FSRS.</span>`;
+}
+function sheetHtml() {
+  if (!S.sheet) return '';
+  let inner = '';
+  if (S.sheet.kind === 'err') inner = errBody(err(S.sheet.id));
+  if (S.sheet.kind === 'review') inner = `<b>Wiederholen</b>${reviewBody()}`;
+  return `<div class="scrim" data-act="closeSheet"></div><div class="sheet" role="dialog">${inner}</div>`;
+}
+const statusbar = `<div class="statusbar"><span>9:41</span><span>So, 18. Okt</span></div>`;
+
+// ---------- Variante A: Tagesfluss, Selbstkorrektur zuerst ----------
+function renderA() {
+  const p = PROMPTS[S.promptIdx];
+  let body = '';
+  if (S.tabA === 'write') {
+    body += `<div class="prompt"><div class="row"><span class="chip">${p.lvl}</span><span class="label" style="margin:0">Impuls des Tages</span><span class="spacer"></span><button class="btn text small" data-act="nextPrompt">Anderer</button></div><p>${p.t}</p></div>`;
+    if (!S.checked || S.editing) {
+      body += `<textarea class="diary" id="draft" aria-label="Eintrag">${esc(S.draft)}</textarea>
+        <div class="row"><span class="stat" id="wc">${words(S.draft)} Wörter · Ziel 5–15 Minuten</span><span class="spacer"></span><button class="btn" data-act="check">Prüfen</button></div>`;
+    } else {
+      body += `<div class="panel"><div class="row"><span class="stat">${S.errors.length} Stellen markiert · ${resolvedCount()} erledigt</span><span class="spacer"></span><button class="btn text small" data-act="edit">Bearbeiten</button></div>
+        <div class="diary">${marked('self')}</div>
+        ${S.errors.length ? `<span class="stat">Tippe auf eine markierte Stelle und versuch es zuerst selbst.</span>` : `<span class="stat">Keine Markierungen. Der Prototyp erkennt nur die Beispielfehler.</span>`}</div>
+        <p class="label">Neue Wörter aus deinem Eintrag</p>
+        <div class="vocab">${VOCAB.filter(v => norm(S.draft).includes(norm(v.w))).map(v => `<button data-act="vocab" data-w="${v.w}" class="${hasCard('v' + v.w) ? 'added' : ''}">${v.w} · <span class="muted">${v.de}</span> ${hasCard('v' + v.w) ? '✓' : '+'}</button>`).join('')}</div>`;
+    }
+  } else if (S.tabA === 'review') {
+    body = reviewBody();
+  } else {
+    body = `<div class="list">${(S.checked ? [{ d: '18. Okt', title: 'Heute', words: words(S.draft), errs: S.errors.length }] : []).concat(PAST).map(e => `<div><span class="date">${e.d}</span><span class="t">${e.title}</span><span class="stat">${e.words} W · ${e.errs} F</span></div>`).join('')}</div>`;
+  }
+  const nav = (k, ico, txt, b) => `<button class="${S.tabA === k ? 'on' : ''}" data-act="tabA" data-k="${k}"><span class="pill">${ico}${b ? `<span class="badge">${b}</span>` : ''}</span>${txt}</button>`;
+  return `${statusbar}
+    <div class="appbar"><h1>${S.tabA === 'write' ? 'Heute' : S.tabA === 'review' ? 'Wiederholen' : 'Verlauf'}<small>Spanisch · A2</small></h1><span class="chip">5 Tage in Folge</span></div>
+    <div class="content">${body}</div>
+    <nav class="navbar">${nav('write', '✎', 'Schreiben')}${nav('review', '↻', 'Wiederholen', due().length || '')}${nav('history', '☰', 'Verlauf')}</nav>
+    ${sheetHtml()}`;
+}
+
+// ---------- Variante B: Dialogjournal mit Tandem ----------
+function renderB() {
+  const p = PROMPTS[S.promptIdx];
+  let msgs = `<span class="day">Heute</span>
+    <div class="bubble them"><div class="who">Lumi</div>¡Hola! ${p.t}<div class="stat" style="margin-top:4px">Schreib auf Spanisch, so gut es geht.</div></div>`;
+  if (S.checked) {
+    msgs += `<div class="bubble me diary">${esc(S.draft)}</div>
+      <div class="bubble them diary"><div class="who">Lumi</div>¡Qué bien! Yo también fui a la playa el verano pasado y <b>hacía mucho calor</b>. ¿Qué libro de García Márquez estás leyendo ahora?</div>`;
+    if (S.errors.length) {
+      msgs += `<div class="corr"><div class="row"><b>Lumi hat ${S.errors.length} Stellen markiert</b><span class="spacer"></span><span class="stat">${resolvedCount()}/${S.errors.length}</span></div>
+        ${S.bOpen ? S.errors.map(e => `<div class="corr-item"><div class="row"><span class="chip ${e.status === 'selbst' ? 'ok' : ''}">${e.type}</span><span class="diary" style="font-size:15px">${resolved(e) ? '' : `<mark class="m open">${esc(e.wrong)}</mark>`}</span></div>${errBody(e, true)}</div>`).join('')
+          : `<span class="muted hint">Zuerst lesen, was Lumi geantwortet hat. Danach kannst du die Stellen selbst verbessern.</span><button class="btn tonal small" style="align-self:flex-start" data-act="bOpen">Stellen ansehen</button>`}</div>`;
+    }
+    msgs += S.bExtra.map(t => `<div class="bubble me diary">${esc(t)}</div><div class="bubble them"><div class="who">Lumi</div>¡Gracias! Mañana me cuentas más.</div>`).join('');
+  }
+  return `${statusbar}
+    <div class="appbar"><span class="avatar">L</span><h1>Lumi<small>Tandem · antwortet auf Spanisch</small></h1><button class="chip" data-act="openReview">↻ ${due().length} Karten</button></div>
+    <div class="content chat" id="chatScroll">${msgs}</div>
+    <div class="composer"><textarea class="diary" id="draft" aria-label="Nachricht" placeholder="Antworte Lumi auf Spanisch…">${S.checked ? '' : esc(S.draft)}</textarea><button class="send" data-act="send" aria-label="Senden">➤</button></div>
+    ${sheetHtml()}`;
+}
+
+// ---------- Variante C: Kalender-Archiv, direkte Korrektur ----------
+function renderC() {
+  if (S.cOpen === 'today') return renderCEditor();
+  if (typeof S.cOpen === 'number') {
+    const e = PAST[S.cOpen];
+    return `${statusbar}<div class="appbar"><button class="btn text" data-act="cBack" aria-label="Zurück">←</button><h1>${e.title}<small>${e.d}</small></h1></div>
+      <div class="content"><div class="diary">${esc(e.text)}</div><span class="stat">${e.words} Wörter · ${e.errs} Korrekturen</span></div>`;
+  }
+  const days = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'].map(d => `<span class="h">${d}</span>`).join('')
+    + '<span></span>'.repeat(3)
+    + Array.from({ length: 31 }, (_, i) => i + 1).map(d => `<span class="d ${WRITTEN.includes(d) || (d === 18 && S.checked) ? 'w' : ''} ${d === 18 ? 'today' : ''}">${d}</span>`).join('');
+  const prof = { ...PROFILE0 };
+  if (S.checked) S.errors.forEach(e => prof[e.type] = (prof[e.type] || 0) + 1);
+  const max = Math.max(...Object.values(prof));
+  const entries = (S.checked ? [{ d: 'Heute', title: S.draft.slice(0, 32) + '…', words: words(S.draft), errs: S.errors.length, today: true }] : []).concat(PAST);
+  return `${statusbar}
+    <div class="appbar"><h1>Mi diario<small>Spanisch · A2 · ${S.checked ? 6 : 5} Tage in Folge</small></h1></div>
+    <div class="content" style="padding-bottom:90px">
+      ${due().length ? `<button class="banner" data-act="openReview"><b>${due().length}</b><span>Karten aus deinen Einträgen sind fällig</span><span class="spacer"></span>›</button>` : ''}
+      <div class="panel"><div class="row"><b>Oktober 2026</b><span class="spacer"></span><span class="stat">${WRITTEN.length + (S.checked ? 1 : 0)} Einträge</span></div><div class="cal">${days}</div></div>
+      <div class="panel"><b>Deine häufigsten Fehler</b><div class="bars">${Object.entries(prof).sort((a, b) => b[1] - a[1]).map(([k, v]) => `<div class="bar"><span>${k}</span><span><i style="width:${v / max * 100}%"></i></span><span>${v}</span></div>`).join('')}</div></div>
+      <p class="label">Einträge</p>
+      <div class="list">${entries.map((e, i) => `<button data-act="cOpen" data-i="${e.today ? 'today' : i - (S.checked ? 1 : 0)}"><span class="date">${e.d}</span><span class="t">${esc(e.title)}</span><span class="stat">${e.errs} F</span></button>`).join('')}</div>
+    </div>
+    ${S.checked ? '' : `<button class="fab" data-act="cNew">✎ Heute schreiben</button>`}
+    ${sheetHtml()}`;
+}
+function renderCEditor() {
+  const p = PROMPTS[S.promptIdx];
+  let body = `<span class="stat">${p.lvl} · ${p.t}</span>`;
+  if (!S.checked || S.editing) {
+    body += `<textarea class="diary" id="draft" aria-label="Eintrag" style="min-height:300px">${esc(S.draft)}</textarea><span class="stat" id="wc">${words(S.draft)} Wörter</span>`;
+  } else {
+    const v = S.cView;
+    body += `<div class="seg">${[['orig', 'Original'], ['fixed', 'Korrigiert'], ['diff', 'Unterschied']].map(([k, t]) => `<button class="${v === k ? 'on' : ''}" data-act="cView" data-k="${k}">${t}</button>`).join('')}</div>
+      <div class="diary">${v === 'orig' ? esc(S.draft) : marked(v)}</div>
+      <p class="label">${S.errors.length} Korrekturen</p>
+      <div class="ctable">${S.errors.map(e => `<div><span class="diary" style="font-size:15px"><del class="d">${esc(e.wrong)}</del> → <b>${esc(e.right)}</b></span>
+        ${hasCard('k' + e.id) ? '<span class="chip ok">✓ Karte</span>' : `<button class="chip" data-act="toCard" data-id="${e.id}">+ Karte</button>`}
+        <span class="ex"><b>${e.type}.</b> ${e.expl}</span></div>`).join('')}</div>`;
+  }
+  return `${statusbar}
+    <div class="appbar"><button class="btn text" data-act="cBack" aria-label="Zurück">←</button><h1>Sonntag, 18. Oktober<small>${S.checked && !S.editing ? 'Korrigiert' : 'Entwurf'}</small></h1>
+    ${S.checked && !S.editing ? `<button class="btn text small" data-act="edit">Bearbeiten</button>` : `<button class="btn small" data-act="check">Korrigieren</button>`}</div>
+    <div class="content">${body}</div>`;
+}
+
+// ---------- Aktionen ----------
+const A = {
+  check() {
+    const prev = Object.fromEntries(S.errors.map(e => [e.id, e.status]));
+    S.errors = ERR.filter(e => S.draft.includes(e.wrong)).map(e => ({ ...e, status: prev[e.id] || 'open' }));
+    S.checked = true; S.editing = false;
+  },
+  edit() { S.editing = true; },
+  nextPrompt() { S.promptIdx = (S.promptIdx + 1) % PROMPTS.length; },
+  openErr(d) { S.sheet = { kind: 'err', id: d.id }; },
+  closeSheet() { S.sheet = null; S.reviewShow = false; },
+  tryFix(d) {
+    const e = err(d.id), v = document.getElementById('fix-' + d.id).value;
+    if (e.accept.includes(norm(v))) { e.status = 'selbst'; delete S.feedback[e.id]; }
+    else S.feedback[e.id] = norm(v) === norm(e.wrong) ? 'Das ist noch die ursprüngliche Form.' : 'Noch nicht ganz. Lies den Tipp noch einmal.';
+  },
+  reveal(d) { err(d.id).status = 'gezeigt'; },
+  toCard(d) { addErrCard(err(d.id)); },
+  vocab(d) { addVocab(VOCAB.find(v => v.w === d.w)); },
+  tabA(d) { S.tabA = d.k; S.reviewShow = false; },
+  openReview() { S.sheet = { kind: 'review' }; S.reviewShow = false; },
+  show() { S.reviewShow = true; },
+  rate() { const c = due()[0]; if (c) c.due = false; S.reviewShow = false; },
+  send() {
+    const v = document.getElementById('draft').value.trim();
+    if (!v) return;
+    if (!S.checked) { S.draft = v; A.check(); } else S.bExtra.push(v);
+  },
+  bOpen() { S.bOpen = true; },
+  cNew() { S.cOpen = 'today'; },
+  cOpen(d) { S.cOpen = d.i === 'today' ? 'today' : Number(d.i); },
+  cBack() { S.cOpen = null; S.editing = false; },
+  cView(d) { S.cView = d.k; },
+};
+
+// ---------- Umschalter ----------
+const VARIANTS = { A: ['Selbstkorrektur zuerst', renderA], B: ['Dialog mit Tandem', renderB], C: ['Kalender & direkte Korrektur', renderC] };
+const KEYS = Object.keys(VARIANTS);
+function initial() {
+  let v = null;
+  try { v = new URLSearchParams(location.search).get('variant'); } catch (e) {}
+  v = v || location.hash.replace('#', '');
+  return KEYS.includes(v) ? v : 'A';
+}
+let cur = initial();
+const phone = document.getElementById('phone');
+function render() {
+  phone.innerHTML = VARIANTS[cur][1]();
+  document.getElementById('lbl').textContent = `${cur} (${VARIANTS[cur][0]})`;
+  const chat = document.getElementById('chatScroll');
+  if (chat && !S.sheet) chat.scrollTop = chat.scrollHeight;
+  renderState();
+}
+function renderState() {
+  const p = document.getElementById('statePanel');
+  if (p.hidden) return;
+  const view = { variant: cur, ...S, errors: S.errors.map(e => `${e.id} ${e.type}: ${e.status}`), cards: S.cards.map(c => `${c.id} ${c.due ? 'fällig' : 'erledigt'} · ${c.back}`) };
+  p.textContent = JSON.stringify(view, null, 2);
+}
+function go(step) {
+  cur = KEYS[(KEYS.indexOf(cur) + step + KEYS.length) % KEYS.length];
+  S.sheet = null; S.editing = false;
+  try { history.replaceState(null, '', '#' + cur); } catch (e) {}
+  render();
+}
+document.getElementById('prev').onclick = () => go(-1);
+document.getElementById('next').onclick = () => go(1);
+document.getElementById('stateBtn').onclick = () => { const p = document.getElementById('statePanel'); p.hidden = !p.hidden; renderState(); };
+document.getElementById('resetBtn').onclick = () => { S = fresh(); render(); };
+document.addEventListener('keydown', ev => {
+  const t = ev.target;
+  if (t.matches('input, textarea, [contenteditable]')) return;
+  if (ev.key === 'ArrowLeft') go(-1);
+  if (ev.key === 'ArrowRight') go(1);
+  if ((ev.key === 'Enter' || ev.key === ' ') && t.dataset && t.dataset.act === 'openErr') { ev.preventDefault(); t.click(); }
+});
+phone.addEventListener('click', ev => {
+  const el = ev.target.closest('[data-act]');
+  if (!el || !A[el.dataset.act]) return;
+  A[el.dataset.act](el.dataset);
+  render();
+});
+phone.addEventListener('input', ev => {
+  if (ev.target.id !== 'draft' || (cur === 'B' && S.checked)) return;
+  S.draft = ev.target.value;
+  const wc = document.getElementById('wc');
+  if (wc) wc.textContent = wc.textContent.replace(/^\d+/, words(S.draft));
+  renderState();
+});
+render();
+</script>
